@@ -10,24 +10,24 @@
 <style>
 :root { --gap:12px; --card:#fff; --border:#e5e7eb; --muted:#6b7280; --bg:#e8e3ec91; }
 * { box-sizing: border-box; }
-body { margin:0; font-size:13px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; background:var(--bg); }
+body { margin:0; font-size:16px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; background:var(--bg); }
 header { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:2; }
 header h1 { font-size:1.1rem; margin:0; }
 main { max-width:720px; margin:0 auto; padding:14px; }
 .card { background:var(--card); border-radius:14px; padding:12px; }
 .composer { display:grid; gap:var(--gap); }
-textarea { width:100%; min-height:96px; padding:10px; font-size:.8rem; resize:vertical; border: 2px solid #e8e3ec96; border-radius: 10px; }
+textarea { width:100%; min-height:96px; padding:10px; resize:vertical; border: 2px solid #e8e3ec96; border-radius: 10px; }
 .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content: space-between; }
-.lang-chip { display:none; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#fafafa; font-size:.9rem; }
+.lang-chip { display:none; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#fafafa; }
 .langBox { display: flex; justify-content: space-between; }
-.btn { text-decoration: none; padding:0; border:none; border-radius:20px; box-sizing: border-box; background:none; cursor:pointer; }
+.btn { text-decoration: none; padding:0; border:none; border-radius:20px; box-sizing: border-box; background:none; cursor:pointer; display: flex; align-items: center;}
 .btn_img { border: none; }
 .btn:active { transform: translateY(1px); }
-.btn.lang { border: 1px solid #ccc; padding: 4px 12px; display: flex; gap: 4px; }
-.btn.primary { border: 2px solid #ae4a74; background:#ae4a74; color:#fff; padding: 3px 40px; display: flex; gap: 5px;}
+.btn.lang { border: 1px solid #ccc; padding: 4px 12px; gap: 4px;}
+.btn.primary { border: 2px solid #ae4a74; background:#ae4a74; color:#fff; padding: 3px 40px; gap: 5px;}
 .btn.clear { border: 2px solid #ae4a74; color:#ae4a74; padding: 3px 20px; }
 .btn.danger { border-color:#ef4444; color:#ef4444; }
-.small { font-size:.7rem; color:var(--muted); }
+.small { font-size:.8rem; color:var(--muted); }
 .grid { display:grid; gap:10px; }
 .post { display:grid; gap:8px; }
 .meta { display:flex; gap:8px; color:var(--muted); font-size:.8rem; }
@@ -68,17 +68,17 @@ details summary { cursor:pointer; }
                 <img src="assets/img/img.svg" alt="画像を選択" style="width:24px;height:24px;vertical-align:middle;">
                 </label>
                 <input id="image" type="file" accept="image/*" style="display:none;">
-                <button class="btn lang" id="addJa"><img src="assets/img/plus.svg" alt="プラス" width="15" style="display:flex">ja</button>
-                <button class="btn lang" id="addEn"><img src="assets/img/plus.svg" alt="プラス" width="15" style="display:flex">en</button>
-                <button class="btn lang" id="addKo"><img src="assets/img/plus.svg" alt="プラス" width="15" style="display:flex">ko</button>
-                <button class="btn lang" id="addZh"><img src="assets/img/plus.svg" alt="プラス" width="15" style="display:flex">zh-TW</button>
+                <button class="btn lang" id="addJa"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">ja</button>
+                <button class="btn lang" id="addEn"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">en</button>
+                <button class="btn lang" id="addKo"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">ko</button>
+                <button class="btn lang" id="addZh"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">zh-TW</button>
             </div>
             <div id="langArea" class="grid"></div>
         </div>
 
         <div class="row">
             <button class="btn clear" id="clearComposer">Clear</button>
-            <button class="btn primary" id="postBtn"><img src="assets/img/cat.svg" alt="cat" width="15" style="display:flex">Post</button>
+            <button class="btn primary" id="postBtn"><img src="assets/img/cat.svg" alt="cat" width="18" style="display:flex">Post</button>
         </div>
     </div>
 
@@ -87,10 +87,10 @@ details summary { cursor:pointer; }
 
     <!-- ツールバー（バックアップ/復元/全削除） -->
     <div class="toolbar">
-        <button class="btn danger" id="purgeBtn" title="全データ削除"><img src="assets/img/batsu.svg" alt="バツ" width="15" style="display:flex"></button>
-        <button class="btn" id="exportBtn" title="エクスポート"><img src="assets/img/export.svg" alt="エクスポート" width="15" style="display:flex"></button>
+        <button class="btn danger" id="purgeBtn" title="全データ削除"><img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex"></button>
+        <button class="btn" id="exportBtn" title="エクスポート"><img src="assets/img/export.svg" alt="エクスポート" width="18" style="display:flex"></button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
-        <button class="btn" id="importBtn" title="インポート"><img src="assets/img/import.svg" alt="インポート" width="15" style="display:flex"></button>
+        <button class="btn" id="importBtn" title="インポート"><img src="assets/img/import.svg" alt="インポート" width="18" style="display:flex"></button>
     </div>
 
     <p class="small">データはこの端末のブラウザに保存されます。</p>
@@ -114,7 +114,7 @@ function createSpeakButton(text, tl) {
     const { app, web } = buildTranslateLinks(text, tl);
     const a = document.createElement("a");
     a.className = "btn";
-    a.innerHTML = `<img src="assets/img/speaker.svg" alt="スピーカー" width="15" style="display:flex">`;
+    a.innerHTML = `<img src="assets/img/speaker.svg" alt="スピーカー" width="18" style="display:flex">`;
 
     // iOS 以外は単純に Web へ
     if (!isiOS) {
@@ -183,9 +183,9 @@ function addLangBlock(lang){
     $wrap.dataset.lang = lang;
     $wrap.dataset.id = id;
     $wrap.innerHTML = `
-        <h4>${langLabel(lang)} <button class="btn small" data-act="remove"><img src="assets/img/batsu.svg" alt="バツ" width="15" style="display:flex"></button></h4>
+        <h4>${langLabel(lang)} <button class="btn small" data-act="remove"><img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex"></button></h4>
         <div class="grid">
-        <label>メインの言葉<textarea data-field="main" placeholder="例）I had ramen for lunch."></textarea></label>
+        <label><textarea data-field="main" placeholder="例）I had ramen for lunch."></textarea></label>
         <details>
             <summary class="small">おすすめの言い換え（0〜3）</summary>
             <div class="grid" style="margin-top:8px;">
@@ -349,7 +349,7 @@ function renderList(){
         // 削除ボタン
         const $del = document.createElement("button");
         $del.className = "btn danger";
-        $del.innerHTML = `<img src="assets/img/batsu.svg" alt="バツ" width="15" style="display:flex">`;
+        $del.innerHTML = `<img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex">`;
         $del.onclick = () => {
             if (confirm("この投稿を削除しますか？")) {
                 const arr = loadPosts().filter(x => x.id !== p.id);
