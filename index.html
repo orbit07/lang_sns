@@ -111,6 +111,7 @@ function buildTranslateLinks(text, tl){
     return { app, web };
 }
 
+/*
 // iOS: まずアプリ → 失敗時 Web への安定フォールバック
 function createSpeakButton(text, tl) {
     const { app, web } = buildTranslateLinks(text, tl);
@@ -160,6 +161,68 @@ function createSpeakButton(text, tl) {
     });
 
     return a;
+}
+    */
+    
+// iOS: まずアプリ → 失敗時だけWeb（blur/pagehide/visibilitychange + 経過時間で確実にキャンセル）
+function createSpeakButton(text, tl) {
+  const { app, web } = buildTranslateLinks(text, tl);
+  const a = document.createElement("a");
+  a.className = "btn";
+  a.innerHTML = `<img src="assets/img/speaker.svg" alt="スピーカー" width="18" style="display:flex">`;
+
+  // iOS以外はシンプルにWebを新規タブで
+  if (!isiOS) {
+    a.href = web;
+    a.target = "_blank";
+    a.rel = "noopener";
+    return a;
+  }
+
+  // --- iOS用: クリック時にだけディープリンク＆フォールバック制御 ---
+  // 長押しメニューが不要なら a.href は付けない方が安全（誤動作防止）
+  // a.href = app; // ←長押しで「リンクを開く」を出したい場合だけ有効化
+
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    let done = false;        // フォールバックを一度だけにするためのフラグ
+    const start = Date.now();
+
+    const cleanup = () => {
+      done = true;
+      window.removeEventListener("blur", onBlur, true);
+      window.removeEventListener("pagehide", onPageHide, true);
+      document.removeEventListener("visibilitychange", onVis, true);
+    };
+
+    const onBlur = () => { cleanup(); };                  // 外部アプリに遷移するとだいたい blur する
+    const onPageHide = () => { cleanup(); };              // タブ遷移で発火することもある
+    const onVis = () => { if (document.hidden) cleanup(); };
+
+    window.addEventListener("blur", onBlur, true);
+    window.addEventListener("pagehide", onPageHide, true);
+    document.addEventListener("visibilitychange", onVis, true);
+
+    // ディープリンク実行
+    // ※ setTimeout(0) でイベントループを一度抜けると挙動が安定するケースがある
+    setTimeout(() => { window.location.href = app; }, 0);
+
+    // フォールバック（失敗時のみ）：1.2〜1.5秒くらいが実運用で安定
+    const FALLBACK_MS = 1300;
+    setTimeout(() => {
+      if (done) return; // すでにアプリ遷移できた
+      // 経過時間が短く、かつ hidden/blur/pagehide も来ていない → アプリ起動失敗とみなす
+      const elapsed = Date.now() - start;
+      if (elapsed >= FALLBACK_MS) {
+        // PWA内で開くと戻れなくなることがあるので target=_blank 推奨
+        window.open(web, "_blank", "noopener");
+      }
+      cleanup();
+    }, FALLBACK_MS);
+  });
+
+  return a;
 }
 
 
