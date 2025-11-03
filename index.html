@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#e8e3ec91">
+<meta name="theme-color" content="#F2EFF4">
 <title>Mew</title>
 <style>
-:root { --gap:12px; --card:#fff; --border:#e5e7eb; --muted:#6b7280; --bg:#e8e3ec91; }
+:root { --gap:12px; --card:#fff; --border:#e5e7eb; --muted:#6b7280; --bg:#F2EFF4; }
 * { font-size:16px; box-sizing: border-box; }
+html{background:var(--bg);}
 body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; background:var(--bg); }
 header { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:2; }
 header h1 { font-size:1.1rem; margin:0; }
 main { max-width:720px; margin:0 auto; padding:14px; }
+
 .card { background:var(--card); border-radius:14px; padding:12px; }
 .composer { display:grid; gap:var(--gap); }
 textarea { font-size: 16px; width:100%; min-height:96px; padding:10px; resize:vertical; border: 2px solid #e8e3ec96; border-radius: 10px; }

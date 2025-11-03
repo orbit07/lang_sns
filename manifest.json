@@ -4,7 +4,7 @@
     "start_url": "/lang_sns/index.html",
     "scope": "/lang_sns/",
     "display": "standalone",
-    "background_color": "#e8e3ec91",
+    "background_color": "#F2EFF4",
     "theme_color": "#ae4a74",
     "icons": [
         {
