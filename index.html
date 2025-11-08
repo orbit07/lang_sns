@@ -19,7 +19,7 @@ main { max-width:720px; margin:0 auto; padding:14px; }
 .card { background:var(--card); border-radius:14px; padding:12px; }
 .composer { display:grid; gap:var(--gap); }
 textarea { font-size: 16px; width:100%; min-height:96px; padding:10px; resize:vertical; border: 2px solid #e8e3ec96; border-radius: 10px; }
-.row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content: space-between; }
+.row { display:flex; flex-wrap:wrap; gap:40px; align-items:center; justify-content: space-between; }
 .lang-chip { display:none; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#fafafa; }
 .langBox { display: flex; justify-content: space-between; }
 .btn { text-decoration: none; padding:0; border:none; border-radius:20px; box-sizing: border-box; background:none; cursor:pointer; display: flex; align-items: center;}
@@ -37,7 +37,7 @@ textarea { font-size: 16px; width:100%; min-height:96px; padding:10px; resize:ve
 .img { width:100%; border-radius:12px; border:1px solid var(--border); background:#f3f4f6; object-fit:cover; max-height:420px; }
 .section { border: none; background: #e8e3ec52; border-radius:12px; padding:10px; }
 details summary { cursor:pointer; }
-.toolbar { position:sticky; bottom:10px; display:flex; gap:40px; margin-top:8px; padding: 5px 12px;}
+.toolbar { display:flex; gap:40px; margin-top:8px; padding: 5px 12px;}
 .list { display:grid; gap:12px; margin-top:12px; }
 .phrase { display:flex; align-items:center; gap:5px; }
 .sep { height:1px; background:var(--border); margin:8px 0; }
@@ -48,6 +48,12 @@ details summary { cursor:pointer; }
 .actions { display:flex; gap:8px; flex-wrap:wrap; }
 .notice { font-size:.9rem; background:#fff; color:#ae4a74; padding:10px; border-radius:10px; }
 .other { padding-top: 10px; display: flex; flex-direction: column; gap: 8px; padding-left: 15px;}
+.edit-area { display:grid; gap:8px; margin-top:8px; }
+.edit-actions { display:flex; gap:8px; margin-top:8px; }
+.edit-block { padding:10px; border-radius:10px; background:#f7f7fb; }
+.edit-block h5 { margin:0 0 6px; font-size:.9rem; }
+.edit-block textarea { width:100%; min-height:72px; padding:8px; font-size:14px; }
+.meta {flex-grow: 1; display: flex; justify-content: end;}
 </style>
 </head>
 <body>
@@ -414,7 +420,7 @@ function renderList(){
         // 削除ボタン
         const $del = document.createElement("button");
         $del.className = "btn danger";
-        $del.innerHTML = `<img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex">`;
+        $del.innerHTML = `<img src="assets/img/batsu.svg" alt="Delete" width="18" style="display:flex">`;
         $del.onclick = () => {
             if (confirm("この投稿を削除しますか？")) {
                 const arr = loadPosts().filter(x => x.id !== p.id);
@@ -423,6 +429,12 @@ function renderList(){
             }
         };
 
+        // Editボタン
+        const $edit = document.createElement("button");
+        $edit.className = "btn";
+        $edit.innerHTML = `<img src="assets/img/edit.svg" alt="Edit" width="18" style="display:flex">`;
+        $edit.onclick = () => enterEditMode($card, p);
+
         // 日時
         const $meta = document.createElement("div");
         $meta.className = "meta";
@@ -430,6 +442,7 @@ function renderList(){
 
         // 横並びでfooterに追加
         $footer.appendChild($del);
+        $footer.appendChild($edit);
         $footer.appendChild($meta);
         $card.appendChild($footer);
 
@@ -439,6 +452,130 @@ function renderList(){
 
 // 初期描画
 renderList();
+
+function enterEditMode($card, post) {
+    // いったんカードの本文部分を消して、編集UIを差し込む
+    // 画像があるなら残したいので、画像以外の .section / footer を消す
+    // → シンプルにカードの中身を全部作り直す方が安全
+    $card.innerHTML = "";
+
+    // 画像（あれば残す）
+    if (post.image) {
+        const $img = document.createElement("img");
+        $img.className = "img";
+        $img.src = post.image;
+        $img.alt = "投稿画像";
+        $card.appendChild($img);
+    }
+
+    // 編集フォーム
+    const $editArea = document.createElement("div");
+    $editArea.className = "edit-area";
+
+    // 各ブロックを編集
+    post.blocks.forEach((b, idx) => {
+        const $blk = document.createElement("div");
+        $blk.className = "edit-block";
+
+        // ラベル
+        const label = (() => {
+        switch (b.lang) {
+            case "ja": return "日本語（ja）";
+            case "ko": return "韓国語（ko）";
+            case "zh-TW": return "台湾華語（zh-TW）";
+            case "en": return "英語（en）";
+            default: return b.lang || "lang";
+        }
+        })();
+
+        $blk.innerHTML = `
+        <h5>${label}</h5>
+        <div>
+            <div class="small">メイン</div>
+            <textarea name="main_${idx}" data-role="main">${(b.main ?? "")}</textarea>
+        </div>
+        <div style="display:grid; gap:6px; margin-top:6px;">
+            <div class="small">言い換え（最大3つ）</div>
+            <textarea name="alt1_${idx}" data-role="alt">${b.alt?.[0] ?? ""}</textarea>
+            <textarea name="alt2_${idx}" data-role="alt">${b.alt?.[1] ?? ""}</textarea>
+            <textarea name="alt3_${idx}" data-role="alt">${b.alt?.[2] ?? ""}</textarea>
+        </div>
+        `;
+
+        // 後で保存時に参照できるよう、インデックスを入れておく
+        $blk.dataset.index = String(idx);
+        $editArea.appendChild($blk);
+    });
+
+    $card.appendChild($editArea);
+
+    // 操作ボタン（Save / Cancel）
+    const $actions = document.createElement("div");
+    $actions.className = "edit-actions";
+
+    const $save = document.createElement("button");
+    $save.className = "btn primary";
+    $save.textContent = "Save";
+    $save.onclick = () => saveEdit($card, post);
+
+    const $cancel = document.createElement("button");
+    $cancel.className = "btn clear";
+    $cancel.textContent = "Cancel";
+    $cancel.onclick = () => renderList(); // 元の表示に戻す
+
+    $actions.appendChild($save);
+    $actions.appendChild($cancel);
+    $card.appendChild($actions);
+}
+
+function saveEdit($card, post) {
+    // 現在のフォームから値を集めて post.blocks に反映
+    const newBlocks = [];
+
+    // .edit-block を順に読む
+    $card.querySelectorAll(".edit-block").forEach($blk => {
+        const idx = Number($blk.dataset.index);
+        const old = post.blocks[idx];
+
+        const main = ($blk.querySelector('[data-role="main"]')?.value ?? "").trim();
+
+        const alts = Array.from($blk.querySelectorAll('[data-role="alt"]'))
+        .map(t => (t.value ?? "").trim())
+        .filter(Boolean)      // 空は落とす
+        .slice(0, 3);         // 最大3つ
+
+        // メイン未入力ならスキップ（元仕様に合わせる）
+        if (!main) return;
+
+        newBlocks.push({
+        lang: old.lang,
+        main,
+        alt: alts
+        });
+    });
+
+    // もし全部空になったら保存しない
+    if (!newBlocks.length) {
+        alert("少なくとも1つの言語ブロックで『メインの言葉』を入力してください。");
+        return;
+    }
+
+    // 保存
+    const posts = loadPosts();
+    const idx = posts.findIndex(x => x.id === post.id);
+    if (idx >= 0) {
+        posts[idx] = {
+        ...post,
+        blocks: newBlocks
+        // 画像や created はそのまま
+        };
+        savePosts(posts);
+    }
+
+    // 再描画
+    renderList();
+}
+
 
 /** =============== バックアップ（エクスポート/インポート/全削除） =============== */
 document.getElementById("exportBtn").onclick = ()=>{
