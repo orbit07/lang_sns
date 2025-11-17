@@ -11,7 +11,7 @@
 :root { --gap:12px; --card:#fff; --border:#e5e7eb; --muted:#6b7280; --bg:#F2EFF4; }
 * { font-size:16px; box-sizing: border-box; }
 html{background:var(--bg);}
-body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; background:var(--bg); }
+body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; background:#f3dadf; }
 header { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:10px; z-index:2; }
 header h1 { font-size:1.1rem; margin:0; }
 main { max-width:720px; margin:0 auto; padding:14px; }
@@ -38,7 +38,7 @@ textarea { font-size: 16px; width:100%; min-height:96px; padding:10px; resize:ve
 .section { border: none; background: #e8e3ec52; border-radius:12px; padding:10px; }
 details summary { cursor:pointer; }
 .toolbar { display:flex; gap:40px; margin-top:8px; padding: 5px 12px;}
-.list { display:grid; gap:12px; margin-top:12px; }
+.list { display:grid; gap:2rem; margin-top:12px; }
 .phrase { display:flex; align-items:center; gap:5px; }
 .sep { height:1px; background:var(--border); margin:8px 0; }
 .pill { font-size:.9rem; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#f9fafb; }
@@ -54,6 +54,7 @@ details summary { cursor:pointer; }
 .edit-block h5 { margin:0 0 6px; font-size:.9rem; }
 .edit-block textarea { width:100%; min-height:72px; padding:8px; font-size:14px; }
 .meta {flex-grow: 1; display: flex; justify-content: end;}
+.post { border: 2px solid #48a0cc; box-shadow: 5px 5px 0 0 #f3dadf, 7px 7px 0 0 #48a0cc; }
 </style>
 </head>
 <body>
