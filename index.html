@@ -16,6 +16,63 @@ header { position:sticky; top:0; background:#fff; border-bottom:1px solid var(--
 header h1 { font-size:1.1rem; margin:0; }
 main { max-width:720px; margin:0 auto; padding:14px; }
 
+.fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #ae4a74;
+    color: #fff;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    font-size: 1.6rem;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+}
+
+.modal.open { display:flex; }
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+}
+
+.modal-body {
+    position: relative;
+    max-width: 780px;
+    width: calc(100% - 24px);
+    margin: 0 auto;
+    z-index: 1;
+}
+
+.composer-header {
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.composer-header h3 { margin: 0; font-size:1.05rem; }
+
+.composer-close {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 6px;
+}
+
 .card { background:var(--card); border-radius:14px; padding:12px; }
 .composer { display:grid; gap:var(--gap); }
 textarea { font-size: 16px; width:100%; min-height:96px; padding:10px; resize:vertical; border: 2px solid #e8e3ec96; border-radius: 10px; }
@@ -48,11 +105,6 @@ details summary { cursor:pointer; }
 .actions { display:flex; gap:8px; flex-wrap:wrap; }
 .notice { font-size:.9rem; background:#fff; color:#ae4a74; padding:10px; border-radius:10px; }
 .other { padding-top: 10px; display: flex; flex-direction: column; gap: 8px; padding-left: 15px;}
-.edit-area { display:grid; gap:8px; margin-top:8px; }
-.edit-actions { display:flex; gap:8px; margin-top:8px; }
-.edit-block { padding:10px; border-radius:10px; background:#f7f7fb; }
-.edit-block h5 { margin:0 0 6px; font-size:.9rem; }
-.edit-block textarea { width:100%; min-height:72px; padding:8px; font-size:14px; }
 .meta {flex-grow: 1; display: flex; justify-content: end;}
 .post { border: 2px solid #48a0cc; box-shadow: 5px 5px 0 0 #f3dadf, 7px 7px 0 0 #48a0cc; }
 </style>
@@ -67,30 +119,6 @@ details summary { cursor:pointer; }
 -->
 
 <main>
-    <!-- 作成フォーム -->
-    <div class="card composer">
-        <img id="preview" alt="プレビュー" style="max-width:100%;margin-top:8px;border-radius:12px;display:none;">
-
-        <div class="grid">
-            <div class="langBox">
-                <label for="image" class="btn btn_img" title="画像を選択">
-                <img src="assets/img/img.svg" alt="画像を選択" style="width:24px;height:24px;vertical-align:middle;">
-                </label>
-                <input id="image" type="file" accept="image/*" style="display:none;">
-                <button class="btn lang" id="addJa"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">ja</button>
-                <button class="btn lang" id="addEn"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">en</button>
-                <button class="btn lang" id="addKo"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">ko</button>
-                <button class="btn lang" id="addZh"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">zh-TW</button>
-            </div>
-            <div id="langArea" class="grid"></div>
-        </div>
-
-        <div class="row">
-            <button class="btn clear" id="clearComposer">Clear</button>
-            <button class="btn primary" id="postBtn"><img src="assets/img/cat.svg" alt="cat" width="18" style="display:flex">Post</button>
-        </div>
-    </div>
-
     <!-- タイムライン -->
     <div class="list" id="list"></div>
 
@@ -102,8 +130,45 @@ details summary { cursor:pointer; }
         <button class="btn" id="importBtn" title="インポート"><img src="assets/img/import.svg" alt="インポート" width="18" style="display:flex"></button>
     </div>
 
-    <p class="small">データはこの端末のブラウザに保存されます。</p>
+    <p class="small">データはこの端末のブラウザに保存されます。右下の「＋」ボタンからカードを作成できます。</p>
 </main>
+
+<button class="fab" id="openComposer" aria-label="カードを作成">＋</button>
+
+<div class="modal" id="composerModal" aria-hidden="true">
+    <div class="modal-backdrop" data-act="close"></div>
+    <div class="modal-body">
+        <div class="card composer">
+            <div class="composer-header">
+                <h3 id="composerTitle">新規カード</h3>
+                <button class="composer-close" id="closeComposer" aria-label="閉じる">
+                    <img src="assets/img/batsu.svg" alt="閉じる" width="18" style="display:flex">
+                </button>
+            </div>
+
+            <img id="preview" alt="プレビュー" style="max-width:100%;margin-top:8px;border-radius:12px;display:none;">
+
+            <div class="grid">
+                <div class="langBox">
+                    <label for="image" class="btn btn_img" title="画像を選択">
+                    <img src="assets/img/img.svg" alt="画像を選択" style="width:24px;height:24px;vertical-align:middle;">
+                    </label>
+                    <input id="image" type="file" accept="image/*" style="display:none;">
+                    <button class="btn lang" id="addJa"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">ja</button>
+                    <button class="btn lang" id="addEn"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">en</button>
+                    <button class="btn lang" id="addKo"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">ko</button>
+                    <button class="btn lang" id="addZh"><img src="assets/img/plus.svg" alt="プラス" width="18" style="display:flex">zh-TW</button>
+                </div>
+                <div id="langArea" class="grid"></div>
+            </div>
+
+            <div class="row">
+                <button class="btn clear" id="clearComposer">Clear</button>
+                <button class="btn primary" id="postBtn"><img src="assets/img/cat.svg" alt="cat" width="18" style="display:flex">Post</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 /** ================== ユーティリティ ================== */
@@ -247,8 +312,20 @@ function fileToDataURL(file){
 function rid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2); }
 
 /** =============== 作成フォーム（言語ブロック） =============== */
+const $composerModal = document.getElementById("composerModal");
+const $composerTitle = document.getElementById("composerTitle");
+const $openComposer = document.getElementById("openComposer");
+const $closeComposer = document.getElementById("closeComposer");
 const $langArea = document.getElementById("langArea");
-function addLangBlock(lang){
+let editingId = null;
+let currentImageData = "";
+
+function setPostButtonLabel(isEdit){
+    const label = isEdit ? "Update" : "Post";
+    $postBtn.innerHTML = `<img src="assets/img/cat.svg" alt="cat" width="18" style="display:flex"> ${label}`;
+}
+
+function addLangBlock(lang, data = {}){
     const id = rid();
     const $wrap = document.createElement("div");
     $wrap.className = "lang-block";
@@ -257,13 +334,13 @@ function addLangBlock(lang){
     $wrap.innerHTML = `
         <h4>${langLabel(lang)} <button class="btn small" data-act="remove"><img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex"></button></h4>
         <div class="grid">
-        <label><textarea data-field="main" placeholder="例）I had ramen for lunch."></textarea></label>
+        <label><textarea data-field="main" placeholder="例）I had ramen for lunch.">${data.main ?? ""}</textarea></label>
         <details>
             <summary class="small">おすすめの言い換え（0〜3）</summary>
             <div class="grid" style="margin-top:8px;">
-            <textarea data-field="alt1" placeholder="言い換え1（任意）"></textarea>
-            <textarea data-field="alt2" placeholder="言い換え2（任意）"></textarea>
-            <textarea data-field="alt3" placeholder="言い換え3（任意）"></textarea>
+            <textarea data-field="alt1" placeholder="言い換え1（任意）">${data.alt?.[0] ?? ""}</textarea>
+            <textarea data-field="alt2" placeholder="言い換え2（任意）">${data.alt?.[1] ?? ""}</textarea>
+            <textarea data-field="alt3" placeholder="言い換え3（任意）">${data.alt?.[2] ?? ""}</textarea>
             </div>
         </details>
         </div>
@@ -281,15 +358,53 @@ function langLabel(lang){
     }
 }
 
+function resetComposer(){
+    editingId = null;
+    currentImageData = "";
+    $image.value = "";
+    $langArea.innerHTML = "";
+    $preview.style.display = "none";
+    $preview.src = "";
+    $composerTitle.textContent = "新規カード";
+    setPostButtonLabel(false);
+}
+
+function closeComposer(){
+    $composerModal.classList.remove("open");
+    $composerModal.setAttribute("aria-hidden", "true");
+}
+
+function openComposer(post = null){
+    resetComposer();
+    if(post){
+        editingId = post.id;
+        currentImageData = post.image || "";
+        if(currentImageData){
+            $preview.src = currentImageData;
+            $preview.style.display = "block";
+        }
+        post.blocks.forEach(b => addLangBlock(b.lang, b));
+        $composerTitle.textContent = "カードを編集";
+        setPostButtonLabel(true);
+    }
+    $composerModal.classList.add("open");
+    $composerModal.setAttribute("aria-hidden", "false");
+}
+
 /** =============== 画像プレビュー =============== */
 const $image = document.getElementById("image");
 const $preview = document.getElementById("preview");
-$image.addEventListener("change", (e) => {
+$image.addEventListener("change", async (e) => {
     const file = e.target.files[0];
-    if (!file) { $preview.style.display = "none"; return; }
-    const reader = new FileReader();
-    reader.onload = () => { $preview.src = reader.result; $preview.style.display = "block"; };
-    reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+        const dataUrl = await fileToDataURL(file);
+        currentImageData = dataUrl;
+        $preview.src = dataUrl;
+        $preview.style.display = "block";
+    } catch {
+        alert("画像の読み込みに失敗しました。");
+    }
 });
 
 /** =============== 投稿作成 =============== */
@@ -299,6 +414,11 @@ document.getElementById("addJa").onclick = ()=>addLangBlock("ja");
 document.getElementById("addKo").onclick = ()=>addLangBlock("ko");
 document.getElementById("addZh").onclick = ()=>addLangBlock("zh-TW");
 document.getElementById("addEn").onclick = ()=>addLangBlock("en");
+$openComposer.addEventListener("click", ()=>openComposer());
+$closeComposer.addEventListener("click", ()=>{ resetComposer(); closeComposer(); });
+$composerModal.addEventListener("click", (e)=>{
+    if(e.target?.dataset?.act === "close"){ resetComposer(); closeComposer(); }
+});
 
 $postBtn.addEventListener("click", async ()=>{
     const blocks = Array.from($langArea.querySelectorAll(".lang-block")).map($b=>{
@@ -311,22 +431,26 @@ $postBtn.addEventListener("click", async ()=>{
 
     if(!blocks.length){ alert("少なくとも1つの言語ブロックで『メインの言葉』を入力してください。"); return; }
 
-    let imgDataUrl = "";
-    const file = $image.files?.[0];
-    if(file){ try { imgDataUrl = await fileToDataURL(file); } catch { alert("画像の読み込みに失敗しました。"); return; } }
-
-    const post = { id: rid(), created: Date.now(), image: imgDataUrl, blocks };
     const posts = loadPosts();
-    posts.push(post);
+    if(editingId){
+        const idx = posts.findIndex(x => x.id === editingId);
+        if(idx >= 0){
+            posts[idx] = { ...posts[idx], image: currentImageData, blocks };
+        }
+    } else {
+        posts.push({ id: rid(), created: Date.now(), image: currentImageData, blocks });
+    }
     savePosts(posts);
 
-    $image.value = ""; // 初期化
-    $langArea.innerHTML = "";
-    $preview.style.display = "none";
+    resetComposer();
+    closeComposer();
     renderList();
 });
 
-$clearComposer.addEventListener("click", ()=>{ $image.value = ""; $langArea.innerHTML = ""; $preview.style.display = "none"; });
+$clearComposer.addEventListener("click", ()=>{ resetComposer(); });
+
+resetComposer();
+closeComposer();
 
 /** =============== タイムライン描画 =============== */
 const $list = document.getElementById("list");
@@ -337,7 +461,7 @@ function renderList(){
     if(!posts.length){
         const $n = document.createElement("div");
         $n.className = "notice";
-        $n.textContent = "まだ投稿がありません。上のフォームから作成してください。";
+        $n.textContent = "まだ投稿がありません。右下の『＋』ボタンから作成してください。";
         $list.appendChild($n);
         return;
     }
@@ -434,7 +558,7 @@ function renderList(){
         const $edit = document.createElement("button");
         $edit.className = "btn";
         $edit.innerHTML = `<img src="assets/img/edit.svg" alt="Edit" width="18" style="display:flex">`;
-        $edit.onclick = () => enterEditMode($card, p);
+        $edit.onclick = () => openComposer(p);
 
         // 日時
         const $meta = document.createElement("div");
@@ -453,130 +577,6 @@ function renderList(){
 
 // 初期描画
 renderList();
-
-function enterEditMode($card, post) {
-    // いったんカードの本文部分を消して、編集UIを差し込む
-    // 画像があるなら残したいので、画像以外の .section / footer を消す
-    // → シンプルにカードの中身を全部作り直す方が安全
-    $card.innerHTML = "";
-
-    // 画像（あれば残す）
-    if (post.image) {
-        const $img = document.createElement("img");
-        $img.className = "img";
-        $img.src = post.image;
-        $img.alt = "投稿画像";
-        $card.appendChild($img);
-    }
-
-    // 編集フォーム
-    const $editArea = document.createElement("div");
-    $editArea.className = "edit-area";
-
-    // 各ブロックを編集
-    post.blocks.forEach((b, idx) => {
-        const $blk = document.createElement("div");
-        $blk.className = "edit-block";
-
-        // ラベル
-        const label = (() => {
-        switch (b.lang) {
-            case "ja": return "日本語（ja）";
-            case "ko": return "韓国語（ko）";
-            case "zh-TW": return "台湾華語（zh-TW）";
-            case "en": return "英語（en）";
-            default: return b.lang || "lang";
-        }
-        })();
-
-        $blk.innerHTML = `
-        <h5>${label}</h5>
-        <div>
-            <div class="small">メイン</div>
-            <textarea name="main_${idx}" data-role="main">${(b.main ?? "")}</textarea>
-        </div>
-        <div style="display:grid; gap:6px; margin-top:6px;">
-            <div class="small">言い換え（最大3つ）</div>
-            <textarea name="alt1_${idx}" data-role="alt">${b.alt?.[0] ?? ""}</textarea>
-            <textarea name="alt2_${idx}" data-role="alt">${b.alt?.[1] ?? ""}</textarea>
-            <textarea name="alt3_${idx}" data-role="alt">${b.alt?.[2] ?? ""}</textarea>
-        </div>
-        `;
-
-        // 後で保存時に参照できるよう、インデックスを入れておく
-        $blk.dataset.index = String(idx);
-        $editArea.appendChild($blk);
-    });
-
-    $card.appendChild($editArea);
-
-    // 操作ボタン（Save / Cancel）
-    const $actions = document.createElement("div");
-    $actions.className = "edit-actions";
-
-    const $save = document.createElement("button");
-    $save.className = "btn primary";
-    $save.textContent = "Save";
-    $save.onclick = () => saveEdit($card, post);
-
-    const $cancel = document.createElement("button");
-    $cancel.className = "btn clear";
-    $cancel.textContent = "Cancel";
-    $cancel.onclick = () => renderList(); // 元の表示に戻す
-
-    $actions.appendChild($save);
-    $actions.appendChild($cancel);
-    $card.appendChild($actions);
-}
-
-function saveEdit($card, post) {
-    // 現在のフォームから値を集めて post.blocks に反映
-    const newBlocks = [];
-
-    // .edit-block を順に読む
-    $card.querySelectorAll(".edit-block").forEach($blk => {
-        const idx = Number($blk.dataset.index);
-        const old = post.blocks[idx];
-
-        const main = ($blk.querySelector('[data-role="main"]')?.value ?? "").trim();
-
-        const alts = Array.from($blk.querySelectorAll('[data-role="alt"]'))
-        .map(t => (t.value ?? "").trim())
-        .filter(Boolean)      // 空は落とす
-        .slice(0, 3);         // 最大3つ
-
-        // メイン未入力ならスキップ（元仕様に合わせる）
-        if (!main) return;
-
-        newBlocks.push({
-        lang: old.lang,
-        main,
-        alt: alts
-        });
-    });
-
-    // もし全部空になったら保存しない
-    if (!newBlocks.length) {
-        alert("少なくとも1つの言語ブロックで『メインの言葉』を入力してください。");
-        return;
-    }
-
-    // 保存
-    const posts = loadPosts();
-    const idx = posts.findIndex(x => x.id === post.id);
-    if (idx >= 0) {
-        posts[idx] = {
-        ...post,
-        blocks: newBlocks
-        // 画像や created はそのまま
-        };
-        savePosts(posts);
-    }
-
-    // 再描画
-    renderList();
-}
-
 
 /** =============== バックアップ（エクスポート/インポート/全削除） =============== */
 document.getElementById("exportBtn").onclick = ()=>{
