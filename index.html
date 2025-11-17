@@ -55,6 +55,9 @@ main { max-width:720px; margin:0 auto; padding:14px; }
     width: calc(100% - 24px);
     margin: 0 auto;
     z-index: 1;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 12px 0;
 }
 
 .composer-header {
@@ -74,7 +77,7 @@ main { max-width:720px; margin:0 auto; padding:14px; }
 }
 
 .card { background:var(--card); border-radius:14px; padding:12px; }
-.composer { display:grid; gap:var(--gap); }
+.composer { display:grid; gap:var(--gap); max-height: calc(90vh - 24px); overflow-y: auto; }
 textarea { font-size: 16px; width:100%; min-height:96px; padding:10px; resize:vertical; border: 2px solid #e8e3ec96; border-radius: 10px; }
 .row { display:flex; flex-wrap:wrap; gap:40px; align-items:center; justify-content: space-between; }
 .lang-chip { display:none; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#fafafa; }
@@ -107,6 +110,7 @@ details summary { cursor:pointer; }
 .other { padding-top: 10px; display: flex; flex-direction: column; gap: 8px; padding-left: 15px;}
 .meta {flex-grow: 1; display: flex; justify-content: end;}
 .post { border: 2px solid #48a0cc; box-shadow: 5px 5px 0 0 #f3dadf, 7px 7px 0 0 #48a0cc; }
+.image-actions { display:flex; justify-content:flex-end; }
 </style>
 </head>
 <body>
@@ -147,6 +151,9 @@ details summary { cursor:pointer; }
             </div>
 
             <img id="preview" alt="プレビュー" style="max-width:100%;margin-top:8px;border-radius:12px;display:none;">
+            <div class="image-actions">
+                <button class="btn clear" id="removeImage" style="display:none;">画像を削除</button>
+            </div>
 
             <div class="grid">
                 <div class="langBox">
@@ -175,6 +182,8 @@ details summary { cursor:pointer; }
 const DB_KEY = "myspeak_sns_posts_v1";
 const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; // iOS 判定
 const TL = { "ja":"ja", "ko":"ko", "zh-TW":"zh-TW", "en":"en" }; // Google翻訳の tl
+const MAX_BLOCKS = 3;
+const DEFAULT_LANG = "ja";
 
 function buildTranslateLinks(text, tl){
     const encoded = encodeURIComponent(text);
@@ -325,28 +334,44 @@ function setPostButtonLabel(isEdit){
     $postBtn.innerHTML = `<img src="assets/img/cat.svg" alt="cat" width="18" style="display:flex"> ${label}`;
 }
 
-function addLangBlock(lang, data = {}){
+function updateLangButtons(){
+    const disabled = $langArea.childElementCount >= MAX_BLOCKS;
+    document.querySelectorAll(".btn.lang").forEach(btn => {
+        btn.disabled = disabled;
+        btn.setAttribute("aria-disabled", disabled ? "true" : "false");
+    });
+}
+
+function addLangBlock(lang, data = {}, opts = {}){
+    const { removable = $langArea.childElementCount > 0, skipLimit = false } = opts;
+    if(!skipLimit && $langArea.childElementCount >= MAX_BLOCKS){
+        alert(`入力欄は最大${MAX_BLOCKS}つまでです。`);
+        return null;
+    }
     const id = rid();
     const $wrap = document.createElement("div");
     $wrap.className = "lang-block";
     $wrap.dataset.lang = lang;
     $wrap.dataset.id = id;
+    $wrap.dataset.removable = removable ? "true" : "false";
+    const removeBtn = removable ? `<button class="btn small" data-act="remove"><img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex"></button>` : "";
     $wrap.innerHTML = `
-        <h4>${langLabel(lang)} <button class="btn small" data-act="remove"><img src="assets/img/batsu.svg" alt="バツ" width="18" style="display:flex"></button></h4>
+        <h4>${langLabel(lang)} ${removeBtn}</h4>
         <div class="grid">
         <label><textarea data-field="main" placeholder="例）I had ramen for lunch.">${data.main ?? ""}</textarea></label>
-        <details>
-            <summary class="small">おすすめの言い換え（0〜3）</summary>
-            <div class="grid" style="margin-top:8px;">
-            <textarea data-field="alt1" placeholder="言い換え1（任意）">${data.alt?.[0] ?? ""}</textarea>
-            <textarea data-field="alt2" placeholder="言い換え2（任意）">${data.alt?.[1] ?? ""}</textarea>
-            <textarea data-field="alt3" placeholder="言い換え3（任意）">${data.alt?.[2] ?? ""}</textarea>
-            </div>
-        </details>
         </div>
     `;
-    $wrap.addEventListener("click", (e)=>{ if(e.target.closest("[data-act='remove']")) $wrap.remove(); });
+    $wrap.addEventListener("click", (e)=>{
+        if(e.target.closest("[data-act='remove']")){
+            if($wrap.dataset.removable === "true"){
+                $wrap.remove();
+                updateLangButtons();
+            }
+        }
+    });
     $langArea.appendChild($wrap);
+    updateLangButtons();
+    return $wrap;
 }
 function langLabel(lang){
     switch(lang){
@@ -358,15 +383,18 @@ function langLabel(lang){
     }
 }
 
-function resetComposer(){
+function resetComposer(opts = {}){
+    const { addDefault = true } = opts;
     editingId = null;
-    currentImageData = "";
-    $image.value = "";
+    clearImagePreview();
     $langArea.innerHTML = "";
-    $preview.style.display = "none";
-    $preview.src = "";
     $composerTitle.textContent = "新規カード";
     setPostButtonLabel(false);
+    if(addDefault){
+        addLangBlock(DEFAULT_LANG, {}, { skipLimit: true, removable: false });
+    } else {
+        updateLangButtons();
+    }
 }
 
 function closeComposer(){
@@ -375,17 +403,25 @@ function closeComposer(){
 }
 
 function openComposer(post = null){
-    resetComposer();
+    resetComposer({ addDefault: !post });
     if(post){
         editingId = post.id;
         currentImageData = post.image || "";
         if(currentImageData){
             $preview.src = currentImageData;
             $preview.style.display = "block";
+            $removeImage.style.display = "inline-flex";
         }
-        post.blocks.forEach(b => addLangBlock(b.lang, b));
+        const blocks = Array.isArray(post.blocks) ? post.blocks : [];
+        if(blocks.length){
+            blocks.forEach((b, idx) => addLangBlock(b.lang, b, { skipLimit: true, removable: idx !== 0 }));
+        } else {
+            addLangBlock(DEFAULT_LANG, {}, { skipLimit: true, removable: false });
+        }
         $composerTitle.textContent = "カードを編集";
         setPostButtonLabel(true);
+    } else {
+        updateLangButtons();
     }
     $composerModal.classList.add("open");
     $composerModal.setAttribute("aria-hidden", "false");
@@ -394,6 +430,21 @@ function openComposer(post = null){
 /** =============== 画像プレビュー =============== */
 const $image = document.getElementById("image");
 const $preview = document.getElementById("preview");
+const $removeImage = document.getElementById("removeImage");
+
+function clearImagePreview(){
+    currentImageData = "";
+    $image.value = "";
+    $preview.style.display = "none";
+    $preview.src = "";
+    $removeImage.style.display = "none";
+}
+
+$removeImage.addEventListener("click", (e)=>{
+    e.preventDefault();
+    clearImagePreview();
+});
+
 $image.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -402,6 +453,7 @@ $image.addEventListener("change", async (e) => {
         currentImageData = dataUrl;
         $preview.src = dataUrl;
         $preview.style.display = "block";
+        $removeImage.style.display = "inline-flex";
     } catch {
         alert("画像の読み込みに失敗しました。");
     }
@@ -425,8 +477,7 @@ $postBtn.addEventListener("click", async ()=>{
         const lang = $b.dataset.lang;
         const get = (sel)=>($b.querySelector(`[data-field='${sel}']`)?.value || "").trim();
         const main = get("main");
-        const alt = [get("alt1"), get("alt2"), get("alt3")].filter(Boolean);
-        return { lang, main, alt };
+        return { lang, main };
     }).filter(b=>b.lang && b.main);
 
     if(!blocks.length){ alert("少なくとも1つの言語ブロックで『メインの言葉』を入力してください。"); return; }
@@ -502,37 +553,6 @@ function renderList(){
                 $mainText.textContent = mainStr;
                 $mainRow.appendChild($mainText);
                 $sec.appendChild($mainRow);
-            }
-
-            // 言い換え
-            if (Array.isArray(b.alt) && b.alt.length) {
-                const $alts = document.createElement("div");
-                $alts.className = "other";
-                const $sum = document.createElement("div");
-                $sum.className = "small hl";
-                $sum.textContent = "他のパターン";
-                $alts.appendChild($sum);
-
-                for (const raw of b.alt) {
-                    const t = (raw ?? "").toString().trim();
-                    if (!t) continue;
-                    if (b.lang !== "ja") {
-                        const $phrase = document.createElement("div");
-                        $phrase.className = "phrase";
-                        $phrase.appendChild(createSpeakButton(t, TL[b.lang]));
-                        const $t = document.createElement("div");
-                        $t.className = "content";
-                        $t.textContent = t;
-                        $phrase.appendChild($t);
-                        $alts.appendChild($phrase);
-                    } else {
-                        const $t = document.createElement("div");
-                        $t.className = "content";
-                        $t.textContent = t;
-                        $alts.appendChild($t);
-                    }
-                }
-                $sec.appendChild($alts);
             }
 
         $card.appendChild($sec);
